@@ -1,10 +1,18 @@
 import discord
+<<<<<<< HEAD
+=======
+from os import system, path
+>>>>>>> 789646badfdbed23066282720f08c266e59fe2ec
 from subprocess import getoutput
 from random import randrange
 from PIL import Image, ImageDraw, ImageFont
 from math import ceil
 from discord.ext.commands import Bot
+<<<<<<< HEAD
 import random
+=======
+import secrets
+>>>>>>> 789646badfdbed23066282720f08c266e59fe2ec
 
 client = discord.Client()
 
@@ -35,8 +43,14 @@ async def on_message(message):
             msgDim[0] + 0.1*msgDim[0]), ceil(msgDim[1] + 0.1*msgDim[1])), (54, 57, 62, 0))
         msgDraw = ImageDraw.Draw(msgImg)
         msgDraw.text((16, 0), msg, fill=(255, 255, 255, 255), font=msgFont)
+<<<<<<< HEAD
         msgImg.save('/tmp/fortune.png')
         embed=discord.Embed(title='The Oracle Says:', color=discord.Color.random())
+=======
+        # TODO: Don't save to hard drive just to load again
+        msgImg.save('/tmp/fortune.png')
+        embed=discord.Embed(title='The Oracle Says:', color=discord.Color.blue())
+>>>>>>> 789646badfdbed23066282720f08c266e59fe2ec
         file = discord.File('/tmp/fortune.png', filename='fortune.png')
         embed.set_image(url="attachment://fortune.png")
         await message.channel.send(embed=embed, file=file)
@@ -47,6 +61,7 @@ async def on_message(message):
             flip_result = "Heads"
         elif flip_range == 1:
             flip_result = "Tails"
+<<<<<<< HEAD
         embed=discord.Embed(title='Coinflip!', description=f'You flipped: {flip_result}', color=discord.Color.random())
         await message.channel.send(embed=embed)
     # v magic 8 ball
@@ -59,6 +74,30 @@ async def on_message(message):
  'Very doubtful')
         magic_answer = random.choice(responses)
         embed=discord.Embed(title='The Oracle Says: ', description=magic_answer, color=discord.Color.random())
+=======
+        embed=discord.Embed(title='Coinflip!', description=f'You flipped: {flip_result}', color=discord.Color.blue())
+        await message.channel.send(embed=embed)
+    # v magic 8 ball
+    if (message.content.find('!8ball') != -1):
+        secretsGenerator = secrets.SystemRandom()
+        number_list = [0,1,2,3,4,5]
+        magic_ball_result = secretsGenerator.choice(number_list)
+        if magic_ball_result == 0:
+            magic_ball_answer=('Without a doubt.')
+        elif magic_ball_result == 1:
+            magic_ball_answer=('Outlook good.')
+        elif magic_ball_result == 2:
+            magic_ball_answer=('Better not tell you now.')
+        elif magic_ball_result == 3:
+            magic_ball_answer=('Outlook not so good')
+        elif magic_ball_result == 4:
+            magic_ball_answer=('My reply is no.')
+        elif magic_ball_result == 5:
+            magic_ball_answer=('Cannot predict now.')
+        else:
+            print("Error!!")
+        embed=discord.Embed(title='The Oracle Says: ', description=magic_ball_answer, color=discord.Color.blue())
+>>>>>>> 789646badfdbed23066282720f08c266e59fe2ec
         await message.channel.send(embed=embed)
     # v help command
     if (message.content.find('!help') != -1):
@@ -66,7 +105,11 @@ async def on_message(message):
 
 !fortune:  Will run the cowsay fortunes command!
 !flip:  Will flip a coin heads or tails Style!
+<<<<<<< HEAD
 !8ball:  Will give a magic 8ball response!''', color=discord.Color.random())
+=======
+!8ball:  Will give a magic 8ball response!''', color=discord.Color.blue())
+>>>>>>> 789646badfdbed23066282720f08c266e59fe2ec
         await message.channel.send(embed=embed)
 
 DISCORD_TOKEN = "no"
