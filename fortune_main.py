@@ -2,7 +2,7 @@ from multiprocessing import parent_process
 from typing import ParamSpecArgs
 import discord
 from subprocess import getoutput
-from random import randrange
+from random import Random, randrange
 from PIL import Image, ImageDraw, ImageFont
 from math import ceil
 from discord.ext.commands import Bot
@@ -81,36 +81,75 @@ async def on_message(message):
         return message.author == player2 and isinstance(message.channel, discord.DMChannel)
     if (message.content.startswith("!rps")):
         #above create embed response saying game between two people has started
-        channelid = message.channel.id
-        channel = client.get_channel(channelid)
-        player1 = message.author
-        player1_id = message.author.id
-        player2 = message.mentions[0]
-        player2_id = message.mentions[0].id
-        await player1.send(f"Rock Paper Scissors against {player2}")
-        await player2.send(f"Rock Paper Scissors against {player1}")
-        player1_choice = await client.wait_for('message', check=check_player1)
-        player2_choice = await client.wait_for('message', check=check_player2)
-        player1_compare = player1_choice.content.lower()
-        player2_compare = player2_choice.content.lower()
-    #two concurrent rps logic || comparing two inputs 0w0
-        if player1_compare == 'rock' and player2_compare == 'scissors':
-            await channel.send(f'<@{player1_id}> wins!')
-        elif player1_compare == 'rock' and player2_compare  == 'paper':
-            await channel.send(f'<@{player2_id}> wins!')
-        elif player1_compare == 'scissors' and player2_compare  == 'paper':
-            await channel.send(f'<@{player1_id}> wins!')
-        elif player1_compare == 'scissors' and player2_compare  == 'rock':
-            await channel.send(f'<@{player2_id}> wins!')
-        elif player1_compare == 'paper' and player2_compare  == 'rock':
-            await channel.send(f'<@{player1_id}> wins!')
-        elif player1_compare == 'paper' and player2_compare  == 'scissors':
-            await channel.send(f'<@{player2_id}> wins!')
-        elif player1_compare == player2_compare:
-            await channel.send('no one wins!')
-        else:
-            print('error')
+        embed_rps=discord.Embed(title='The Oracle says:',color=discord.Color.random())
+        embed_rps.set_thumbnail(url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUNjdD-Vfq-_MZpu-KZpUdqmiXmqV4FcEr_lLmuCyyYsdA7r_MHhPh9dLVwSA2GQa9Bvg&usqp=CAU')
+        embed_dm=discord.Embed(title='The Oracle says:',color=discord.Color.random())
+        embed_dm.set_thumbnail(url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUNjdD-Vfq-_MZpu-KZpUdqmiXmqV4FcEr_lLmuCyyYsdA7r_MHhPh9dLVwSA2GQa9Bvg&usqp=CAU')
+        embed_dm.add_field(name='Rock Paper Scissors!',value='Send Rock Paper or Scissors into chat below!')
+        try:
+          channelid = message.channel.id
+          channel = client.get_channel(channelid)
+          player1 = message.author
+          player1_id = message.author.id
+          player2 = message.mentions[0]
+          player2_id = message.mentions[0].id
+          await player1.send(embed=embed_dm)
+          await player2.send(embed=embed_dm)
+          async def rps_function():
+            player1_choice = await client.wait_for('message', check=check_player1)
+            player2_choice = await client.wait_for('message', check=check_player2)
+            player1_compare = player1_choice.content.lower()
+            player2_compare = player2_choice.content.lower()
+            if player1_compare != 'rock' and player1_compare != 'paper' and player1_compare != 'scissors':
+                 await player1.send('Choose again')
+                 player1_choice = await client.wait_for('message', check=check_player1)
+            elif player2_compare != 'rock' and player2_compare != 'paper' and player2_compare != 'scissors':
+                 await player2.send('Choose again')
+                 player2_choice = await client.wait_for('message', check=check_player2)
+            elif player1_compare == 'rock' and player2_compare == 'scissors':
+                embed_rps.add_field(name=f'{player1} Won!', value="\u200b",inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == 'rock' and player2_compare  == 'paper':
+                embed_rps.add_field(name=f'{player2} Won!', value="\u200b",inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == 'scissors' and player2_compare  == 'paper':
+                embed_rps.add_field(name=f'{player1} Won!', value="\u200b",inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == 'scissors' and player2_compare  == 'rock':
+                embed_rps.add_field(name=f'{player2} Won!',value="\u200b", inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == 'paper' and player2_compare  == 'rock':
+                embed_rps.add_field(name=f'{player1} Won!', value="\u200b",inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == 'paper' and player2_compare  == 'scissors':
+                embed_rps.add_field(name=f'{player2} Won!',value="\u200b", inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            elif player1_compare == player2_compare:
+                embed_rps.add_field(name='No one wins!',value="\u200b", inline=False)
+                embed_rps.add_field(name=f'{player1}',value=f"<@{player1_id}>\nChose: {player1_choice.content}")
+                embed_rps.add_field(name=f'{player2}',value=f"<@{player2_id}>\nChose: {player2_choice.content}")
+                await channel.send(embed=embed_rps)
+            else:
+                print('error')
+                
+          await rps_function()
+        except (IndexError,AttributeError):
+            print(f'{player1} didnt mention someone correctly')
+#above change the rps to respond based off of reactions instead of text . that should fix some input issues
+#change int an embed so the game feels smoother to play
 TOKEN = os.getenv("DISCORD_TOKEN")
 client.run(TOKEN)
 
-# Below is projects in progress
+# Need to rework bot to work off of events and / commands for ease of development in the future
