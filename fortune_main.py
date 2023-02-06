@@ -96,10 +96,10 @@ async def coin_flip(interaction: discord.Interaction):
 @bot.tree.command(name='help',description='Display the help message')
 async def help_func(interaction: discord.Interaction):
     embed=discord.Embed (title='Help!', description='''I can only do a few things at the moment:
-!fortune:  Will run the cowsay fortunes command!
-!flip:  Will flip a coin heads or tails Style!
-!8ball:  Will give a magic 8ball response!
-!rps: <!rps @anyone> in the server and reply to the dm with Rock Paper or Scissors''', color=discord.Color.random())
+/fortune:  Will run the cowsay fortunes command!
+/flip:  Will flip a coin heads or tails Style!
+/8ball:  Will give a magic 8ball response!
+/rps: </rps @anyone> in the server and reply to the dm with Rock Paper or Scissors''', color=discord.Color.random())
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name='rps',description='@ another user and reply to the bots DM to play!')
