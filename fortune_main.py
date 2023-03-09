@@ -8,13 +8,17 @@ import random
 from PIL import Image, ImageDraw, ImageFont
 from math import ceil
 from subprocess import getoutput
-
+import replicate
+import aiohttp
 #gathers token for running the bot
-load_dotenv('TOKEN.env')
-token = environ["TOKEN"]
+load_dotenv('token.env')
+token = environ["DISCORD_TOKEN"]
+REPLICATE_API_TOKEN = environ["REPLICATE_AI_TOKEN"]
+GPT_API_KEY = environ['GPT_API_KEY']
+Replicate = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
 #defines prefix and intents
-bot = commands.Bot(command_prefix="!", intents= discord.Intents.default())
+bot = commands.Bot(command_prefix="!", intents= discord.Intents.all())
 
 #defined vibes to be referenced later in the vibe function
 vibes = ['Chill vibes','Good vibes','Bad vibes','Wack','Meh','This is fine','Could be better','Could be worse']
@@ -38,7 +42,7 @@ winning_combo = {
 async def on_ready():
     print('The Oracle has awoken')
     try:
-        synced= await bot.tree.sync()
+        synced = await bot.tree.sync()
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(e)
@@ -48,7 +52,7 @@ async def on_ready():
 async def vibe(interaction: discord.Interaction):
     vibes_length = len(vibes)
     choice_index = random.randint(0,vibes_length-1)
-    embed=discord.Embed(title='Vibe check', description=vibes[choice_index], color=discord.Color.random())
+    embed = discord.Embed(title='Vibe check', description=vibes[choice_index], color=discord.Color.random())
     await interaction.response.send_message(embed=embed)
 
 #this will run the fortune - cowsay command in local terminal and send the output as a message
@@ -99,7 +103,9 @@ async def help_func(interaction: discord.Interaction):
 /fortune:  Will run the cowsay fortunes command!
 /flip:  Will flip a coin heads or tails Style!
 /8ball:  Will give a magic 8ball response!
-/rps: </rps @anyone> in the server and reply to the dm with Rock Paper or Scissors''', color=discord.Color.random())
+/rps: </rps @anyone> in the server and reply to the dm with Rock Paper or Scissors
+/aidraw prompt to have replicate generate an image
+/askai question to get a response from chatGPT''', color=discord.Color.random())
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name='rps',description='@ another user and reply to the bots DM to play!')
@@ -175,6 +181,48 @@ async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
 
     except Exception as e:
         print(e)
+
+
+
+@bot.tree.command(name='askai',description='Ask a question to ChatGPT!')
+async def ask_ai(interaction: discord.Interaction, question:str):
+    channel = interaction.channel
+    msg_embed = discord.Embed(title='ChatGPT Says:',description=f"{question}\n> Generating...")
+    msg = await interaction.response.send_message(embed=msg_embed)
+    async with aiohttp.ClientSession() as session:
+        payload = {
+            'model':'gpt-3.5-turbo',
+            'temperature':0.5,
+            'max_tokens': 1000,
+            'messages':[
+            {'role': 'system','content':'You are a helpful assistant who responds conversationally'},
+            {'role':'user','content':question}
+            ]
+        }
+        headers = {'Authorization':f'Bearer {GPT_API_KEY}'}
+        async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers) as resp:
+            response = await resp.json()
+            embed = discord.Embed(title='ChatGPT Says:', description=response['choices'][0]['message']['content'])
+            embed.set_footer(text=question)
+            await interaction.edit_original_response(embed=embed)
+
+            # {'id': 'chatcmpl-6s1iF7eO66yReS2AWLnsvCc2iuc3n', 'object': 'chat.completion', 'created': 1678334315, 'model': 'gpt-3.5-turbo-0301', 'usage': {'prompt_tokens': 22, 'completion_tokens': 12, 'total_tokens': 34}, 'choices': [{'message': {'role': 'assistant', 'content': 'Hello there! How can I assist you today?'}, 'finish_reason': 'stop', 'index': 0}]}
+
+@bot.tree.command(name='aidraw',description='Provide a prompt to stable diffusion')
+async def ai_draw(interaction:discord.Interaction, prompt:str):
+    try:
+        channel = interaction.channel
+        msg_embed = discord.Embed(title='Replicate is drawing:', description=f"\n{prompt}\n> Generating...")
+        msg = await interaction.response.send_message(embed=msg_embed)
+        model = Replicate.models.get("stability-ai/stable-diffusion")
+        image = model.predict(prompt=prompt)[0]
+        image_ = image
+        await interaction.edit_original_response(content=f"{interaction.user.mention}\n{image_}",embed=None)
+    except Exception as e:
+        if str(e) == "NSFW content detected. Try running it again, or try a different prompt.":
+            channel = interaction.channel
+            await channel.send(interaction.user.mention+'\n'+str(e))
+
 
 
 #runs the bot
