@@ -6,6 +6,6 @@ Features include:
 Coinflip
 Cowsay Fortune
 2 player rock paper scissors
-Replicate API image generation
-GPT-3.5-Turbo support
+Dall-E API image generation
+text-davinci-002 support
 
