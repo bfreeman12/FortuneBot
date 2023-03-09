@@ -1,5 +1,5 @@
-
-Discord bot that uses parts of nobrien97's bot with some features added by me.
+using nobrien97's code for displaying cowsay fortune output everything else is created by me either by following guides
+or working through it. 
 
 Features include:
 8ball
