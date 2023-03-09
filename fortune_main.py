@@ -8,14 +8,13 @@ import random
 from PIL import Image, ImageDraw, ImageFont
 from math import ceil
 from subprocess import getoutput
-import replicate
 import aiohttp
+import openai
 #gathers token for running the bot
 load_dotenv('token.env')
 token = environ["DISCORD_TOKEN"]
-REPLICATE_API_TOKEN = environ["REPLICATE_AI_TOKEN"]
 GPT_API_KEY = environ['GPT_API_KEY']
-Replicate = replicate.Client(api_token=REPLICATE_API_TOKEN)
+openai.api_key = GPT_API_KEY
 
 #defines prefix and intents
 bot = commands.Bot(command_prefix="!", intents= discord.Intents.all())
@@ -191,39 +190,37 @@ async def ask_ai(interaction: discord.Interaction, question:str):
     msg = await interaction.response.send_message(embed=msg_embed)
     async with aiohttp.ClientSession() as session:
         payload = {
-            'model':'gpt-3.5-turbo',
+            'model':'text-davinci-002',
             'temperature':0.5,
             'max_tokens': 1000,
-            'messages':[
-            {'role': 'system','content':'You are a helpful assistant who responds conversationally'},
-            {'role':'user','content':question}
-            ]
+            'prompt':question
         }
         headers = {'Authorization':f'Bearer {GPT_API_KEY}'}
-        async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers) as resp:
+        async with session.post("https://api.openai.com/v1/completions", json=payload, headers=headers) as resp:
             response = await resp.json()
-            embed = discord.Embed(title='ChatGPT Says:', description=response['choices'][0]['message']['content'])
+            embed = discord.Embed(title='ChatGPT Says:', description=response['choices'][0]['text'])
             embed.set_footer(text=question)
             await interaction.edit_original_response(embed=embed)
 
-            # {'id': 'chatcmpl-6s1iF7eO66yReS2AWLnsvCc2iuc3n', 'object': 'chat.completion', 'created': 1678334315, 'model': 'gpt-3.5-turbo-0301', 'usage': {'prompt_tokens': 22, 'completion_tokens': 12, 'total_tokens': 34}, 'choices': [{'message': {'role': 'assistant', 'content': 'Hello there! How can I assist you today?'}, 'finish_reason': 'stop', 'index': 0}]}
 
 @bot.tree.command(name='aidraw',description='Provide a prompt to stable diffusion')
 async def ai_draw(interaction:discord.Interaction, prompt:str):
-    try:
+    try:  
         channel = interaction.channel
-        msg_embed = discord.Embed(title='Replicate is drawing:', description=f"\n{prompt}\n> Generating...")
+        msg_embed = discord.Embed(title='Dall-e is drawing:', description=f"\n{prompt}\n> Generating...")
         msg = await interaction.response.send_message(embed=msg_embed)
-        model = Replicate.models.get("stability-ai/stable-diffusion")
-        image = model.predict(prompt=prompt)[0]
-        image_ = image
-        await interaction.edit_original_response(content=f"{interaction.user.mention}\n{image_}",embed=None)
+        response = openai.Image.create(
+            prompt=prompt,
+            n=1,
+            size='256x256'
+        )
+        image_ = response['data'][0]['url']
+        response_embed = discord.Embed(title='Your masterpiece',description=interaction.user.mention)
+        response_embed.set_image(url=image_)
+        response_embed.set_footer(text=prompt)
+        await interaction.edit_original_response(embed=response_embed)
     except Exception as e:
-        if str(e) == "NSFW content detected. Try running it again, or try a different prompt.":
-            channel = interaction.channel
+        if str(e) == 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.':
             await channel.send(interaction.user.mention+'\n'+str(e))
 
-
-
-#runs the bot
 bot.run(token)
