@@ -188,19 +188,13 @@ async def ask_ai(interaction: discord.Interaction, question:str):
     channel = interaction.channel
     msg_embed = discord.Embed(title='ChatGPT Says:',description=f"{question}\n> Generating...")
     msg = await interaction.response.send_message(embed=msg_embed)
-    async with aiohttp.ClientSession() as session:
-        payload = {
-            'model':'text-davinci-002',
-            'temperature':0.5,
-            'max_tokens': 1000,
-            'prompt':question
-        }
-        headers = {'Authorization':f'Bearer {GPT_API_KEY}'}
-        async with session.post("https://api.openai.com/v1/completions", json=payload, headers=headers) as resp:
-            response = await resp.json()
-            embed = discord.Embed(title='ChatGPT Says:', description=response['choices'][0]['text'])
-            embed.set_footer(text=question)
-            await interaction.edit_original_response(embed=embed)
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role":"user","content":question}]
+    )
+    embed = discord.Embed(title='ChatGPT Says:', description=completion['choices'][0]['message']['content'])
+    embed.set_footer(text=question)
+    await interaction.edit_original_response(embed=embed)
 
 
 @bot.tree.command(name='aidraw',description='Provide a prompt to stable diffusion')
