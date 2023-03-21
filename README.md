@@ -7,5 +7,5 @@ Coinflip
 Cowsay Fortune
 2 player rock paper scissors
 Dall-E API image generation
-text-davinci-002 support
+gpt-3.5-turbo support
 
