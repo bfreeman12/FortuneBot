@@ -187,7 +187,7 @@ async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
 @bot.tree.command(name='askai',description='Ask a question to ChatGPT!')
 async def ask_ai(interaction: discord.Interaction, question:str):
     channel = interaction.channel
-    msg_embed = discord.Embed(title='ChatGPT Says:',description=f"{question}\n> Generating...")
+    msg_embed = discord.Embed(title='GPT4 Says:',description=f"{question}\n> Generating...")
     msg = await interaction.response.send_message(embed=msg_embed)
     completion = client.chat.completions.create(
     model="gpt-4",
