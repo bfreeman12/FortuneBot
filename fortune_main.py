@@ -10,11 +10,12 @@ from math import ceil
 from subprocess import getoutput
 import aiohttp
 import openai
+from openai import OpenAI
 #gathers token for running the bot
 load_dotenv('token.env')
 token = environ["DISCORD_TOKEN"]
-GPT_API_KEY = environ['GPT_API_KEY']
-openai.api_key = GPT_API_KEY
+GPT_API_KEY = environ['OPENAI_API_KEY']
+client = OpenAI(api_key=environ['OPENAI_API_KEY'])
 
 #defines prefix and intents
 bot = commands.Bot(command_prefix="!", intents= discord.Intents.all())
@@ -22,7 +23,7 @@ bot = commands.Bot(command_prefix="!", intents= discord.Intents.all())
 #defined vibes to be referenced later in the vibe function
 vibes = ['Chill vibes','Good vibes','Bad vibes','Wack','Meh','This is fine','Could be better','Could be worse']
 
-#defined responses for the magic 8 ball function 
+#defined responses for the magic 8 ball function
 magic_ball_responses = ('It is certain', 'It is decidedly so', 'Without a doubt', 'Yes, definitely',
  'You may rely on it', 'As I see it, yes', 'Most likely', 'Outlook good',
  'Signs point to yes', 'Yes', 'Reply hazy, try again', 'Ask again later',
@@ -57,11 +58,11 @@ async def vibe(interaction: discord.Interaction):
 #this will run the fortune - cowsay command in local terminal and send the output as a message
 @bot.tree.command(name='fortune',description='Get your fortune!')
 async def fortune(interaction: discord.Interaction):
-    cowTypes = getoutput('cowsay -l')[37:]
+    cowTypes = getoutput('/usr/games/cowsay -l')[37:]
     cowTypes = cowTypes.split()  # split into cowsay animals
     typechoice = cowTypes[randrange(0, len(cowTypes), 1)]
     # Use our choice to generate a cowsay
-    msg = getoutput('fortune | cowsay -f {}'.format(typechoice))
+    msg = getoutput('/usr/games/fortune | /usr/games/cowsay -f {}'.format(typechoice))
     # Image generation: calculate length and width of image and instantiate
     msgFont = ImageFont.truetype("UbuntuMono-Regular.ttf", 12)
     msgDim = msgFont.getsize_multiline(msg)
@@ -109,20 +110,20 @@ async def help_func(interaction: discord.Interaction):
 
 @bot.tree.command(name='rps',description='@ another user and reply to the bots DM to play!')
 async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
-    
-    #define styles for the embeds 
+
+    #define styles for the embeds
     embed_rps=discord.Embed(title='The Oracle says:',color=discord.Color.random())
     embed_rps.set_thumbnail(url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUNjdD-Vfq-_MZpu-KZpUdqmiXmqV4FcEr_lLmuCyyYsdA7r_MHhPh9dLVwSA2GQa9Bvg&usqp=CAU')
     embed_dm=discord.Embed(title='The Oracle says:',color=discord.Color.random())
     embed_dm.set_thumbnail(url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUNjdD-Vfq-_MZpu-KZpUdqmiXmqV4FcEr_lLmuCyyYsdA7r_MHhPh9dLVwSA2GQa9Bvg&usqp=CAU')
     embed_dm.add_field(name='Rock Paper Scissors!',value='Send Rock Paper or Scissors into chat below!')
-    
+
     try:
         #define players and gather user id's
         player1_name = interaction.user
         player1 = interaction.user.id
         player2 = secondplayer.id
-    
+
 
         #checks if both players are from the same instance
         async def check_player1(message):
@@ -137,8 +138,8 @@ async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
             await player1_message.send(embed=embed_dm)
             player1_choice = await bot.wait_for('message', check=check_player1)
             player1_compare = player1_choice.content.lower()
-            
-            #these while loops ensure the key being passed into the winner check is a valid key in the list 
+
+            #these while loops ensure the key being passed into the winner check is a valid key in the list
             while player1_compare != 'rock' and player1_compare != 'paper' and player1_compare != 'scissors':
                 await player1_message.send('Choose again')
                 player1_choice = await bot.wait_for('message', check=check_player1)
@@ -151,8 +152,8 @@ async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
             await player2_message.send(embed=embed_dm)
             player2_choice = await bot.wait_for('message', check=check_player2)
             player2_compare = player2_choice.content.lower()
-                        
-            #these while loops ensure the key being passed into the winner check is a valid key in the list 
+
+            #these while loops ensure the key being passed into the winner check is a valid key in the list
             while player2_compare != 'rock' and player2_compare != 'paper' and player2_compare != 'scissors':
                 await player2_message.send('Choose again')
                 player2_choice = await bot.wait_for('message', check=check_player2)
@@ -169,13 +170,13 @@ async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
 
             elif player2_compare == winning_combo[player1_compare]:
                 embed_rps.add_field(name=f'{player1_name} Won!', value="\u200b",inline=False)
-   
+
             else:
                 print('error')
             embed_rps.add_field(name=f'{player1_name}',value=f"<@{player1}>\nChose: {player1_compare}")
             embed_rps.add_field(name=f'{secondplayer}',value=f"<@{player2}>\nChose: {player2_compare}")
             await interaction.channel.send(embed=embed_rps)
-        
+
         await rps_game()
 
     except Exception as e:
@@ -188,29 +189,32 @@ async def ask_ai(interaction: discord.Interaction, question:str):
     channel = interaction.channel
     msg_embed = discord.Embed(title='ChatGPT Says:',description=f"{question}\n> Generating...")
     msg = await interaction.response.send_message(embed=msg_embed)
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role":"user","content":question}]
+    completion = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role":"user","content":question}]
     )
-    embed = discord.Embed(title='ChatGPT Says:', description=completion['choices'][0]['message']['content'])
+    response = completion.choices[0].message.content
+    embed = discord.Embed(title='ChatGPT Says:', description=response)
     embed.set_footer(text=question)
     await interaction.edit_original_response(embed=embed)
 
 
-@bot.tree.command(name='aidraw',description='Provide a prompt to stable diffusion')
+@bot.tree.command(name='aidraw',description='Provide a prompt to Dall-e-3 to generate an image!')
 async def ai_draw(interaction:discord.Interaction, prompt:str):
-    try:  
+    try:
         channel = interaction.channel
         msg_embed = discord.Embed(title='Dall-e is drawing:', description=f"\n{prompt}\n> Generating...")
         msg = await interaction.response.send_message(embed=msg_embed)
-        response = openai.Image.create(
+        response = client.images.generate(
+            model="dall-e-3",
             prompt=prompt,
+            size="1024x1024",
+            quality="standard",
             n=1,
-            size='256x256'
         )
-        image_ = response['data'][0]['url']
+        image_url = response.data[0].url
         response_embed = discord.Embed(title='Your masterpiece',description=interaction.user.mention)
-        response_embed.set_image(url=image_)
+        response_embed.set_image(url=image_url)
         response_embed.set_footer(text=prompt)
         await interaction.edit_original_response(embed=response_embed)
     except Exception as e:
