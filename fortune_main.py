@@ -1,6 +1,5 @@
 import discord
-from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands 
 from dotenv import load_dotenv
 from os import environ
 from random import Random,randrange
@@ -8,9 +7,11 @@ import random
 from PIL import Image, ImageDraw, ImageFont
 from math import ceil
 from subprocess import getoutput
-import aiohttp
-import openai
+from datetime import datetime
+import pytz
+from datetime import datetime
 from openai import OpenAI
+
 #gathers token for running the bot
 load_dotenv('token.env')
 token = environ["DISCORD_TOKEN"]
@@ -48,15 +49,20 @@ async def on_ready():
         print(e)
 
 #gets a random vibe from the above list
-@bot.tree.command(name='vibe',description='Vibe check')
+@bot.tree.command(name='vibe', description='Conducts a vibe check.')
 async def vibe(interaction: discord.Interaction):
     vibes_length = len(vibes)
-    choice_index = random.randint(0,vibes_length-1)
-    embed = discord.Embed(title='Vibe check', description=vibes[choice_index], color=discord.Color.random())
+    choice_index = random.randint(0, vibes_length-1)
+    embed = discord.Embed(
+        title='Vibe Check Result',
+        description=vibes[choice_index],
+        color=discord.Color.random()
+    )
     await interaction.response.send_message(embed=embed)
 
+
 #this will run the fortune - cowsay command in local terminal and send the output as a message
-@bot.tree.command(name='fortune',description='Get your fortune!')
+@bot.tree.command(name='fortune', description='Receive a fortune from the oracle.')
 async def fortune(interaction: discord.Interaction):
     cowTypes = getoutput('/usr/games/cowsay -l')[37:]
     cowTypes = cowTypes.split()  # split into cowsay animals
@@ -66,48 +72,64 @@ async def fortune(interaction: discord.Interaction):
     # Image generation: calculate length and width of image and instantiate
     msgFont = ImageFont.truetype("UbuntuMono-Regular.ttf", 12)
     msgDim = msgFont.getsize_multiline(msg)
-    msgImg = Image.new('RGB', (ceil(
-        msgDim[0] + 0.1*msgDim[0]), ceil(msgDim[1] + 0.1*msgDim[1])), (54, 57, 62, 0))
+    msgImg = Image.new('RGB', (ceil(msgDim[0] + 0.1*msgDim[0]), ceil(msgDim[1] + 0.1*msgDim[1])), (54, 57, 62, 0))
     msgDraw = ImageDraw.Draw(msgImg)
     msgDraw.text((16, 0), msg, fill=(255, 255, 255, 255), font=msgFont)
     msgImg.save('/tmp/fortune.png')
-    embed=discord.Embed(title='The Oracle Says:', color=discord.Color.random())
+    embed = discord.Embed(title='Oracle\'s Proclamation:', color=discord.Color.random())
     file = discord.File('/tmp/fortune.png', filename='fortune.png')
     embed.set_image(url="attachment://fortune.png")
     await interaction.response.send_message(embed=embed, file=file)
 
 #this will run the magic 8 ball
-@bot.tree.command(name='8ball',description='Consult the magic 8 ball!')
+@bot.tree.command(name='8ball', description='Consult the Magic 8-Ball for a prediction.')
 async def magic_ball(interaction: discord.Interaction):
     magic_answer = random.choice(magic_ball_responses)
-    embed=discord.Embed(title='The Oracle Says: ', description=magic_answer, color=discord.Color.random())
+    embed = discord.Embed(
+        title='Magic 8-Ball Prediction',
+        description=f'The Magic 8-Ball says: {magic_answer}',
+        color=discord.Color.random()
+    )
     await interaction.response.send_message(embed=embed)
 
-
-@bot.tree.command(name='flip',description='Flip a coin heads or tails!')
+@bot.tree.command(name='flip', description='Initiates a coin flip.')
 async def coin_flip(interaction: discord.Interaction):
     results = {
-        0 : 'Heads',
-        1 : 'Tails'
+        0: 'Heads',
+        1: 'Tails'
     }
-    index = randrange(0,2)
+    index = randrange(0, 2)
     flip_result = results[index]
-    embed=discord.Embed(title='Coinflip!', description=f'You flipped: {flip_result}!', color=discord.Color.random())
+    embed = discord.Embed(
+        title='Coin Flip Result',
+        description=f'The coin landed on: {flip_result}.',
+        color=discord.Color.random()
+    )
     await interaction.response.send_message(embed=embed)
-
 
 #help command to list current functions
-@bot.tree.command(name='help',description='Display the help message')
+@bot.tree.command(name='help', description='Display the help message')
 async def help_func(interaction: discord.Interaction):
-    embed=discord.Embed (title='Help!', description='''I can only do a few things at the moment:
-/fortune:  Will run the cowsay fortunes command!
-/flip:  Will flip a coin heads or tails Style!
-/8ball:  Will give a magic 8ball response!
-/rps: </rps @anyone> in the server and reply to the dm with Rock Paper or Scissors
-/aidraw prompt to have replicate generate an image
-/askai question to get a response from chatGPT''', color=discord.Color.random())
-    await interaction.response.send_message(embed=embed)
+    embed = discord.Embed(
+        title='Bot Command Help',
+        description='Here are the commands you can use:',
+        color=discord.Color.random()
+    )
 
+    commands = {
+        '/fortune': 'Runs the cowsay fortunes command.',
+        '/flip': 'Flips a coin, heads or tails style.',
+        '/8ball': 'Provides a magic 8-ball response.',
+        '/rps': 'Play Rock, Paper, Scissors. Use as `/rps @user` and reply to the DM with Rock, Paper, or Scissors.',
+        '/aidraw': 'Generates an image based on your prompt. Use as `/aidraw your_prompt`.',
+        '/askai': 'Gets a response from ChatGPT. Use as `/askai your_question`.',
+        '/tz': 'Converts a date and time from a specific timezone to a Unix timestamp. Use as `/tz date(yyyy-mm-dd) time(HHMM) timezone(est/gmt/cet)`.'
+    }
+
+    for command, description in commands.items():
+        embed.add_field(name=command, value=description, inline=False)
+
+    await interaction.response.send_message(embed=embed)
 @bot.tree.command(name='rps',description='@ another user and reply to the bots DM to play!')
 async def rps(interaction: discord.Interaction, secondplayer:discord.Member):
 
@@ -220,5 +242,27 @@ async def ai_draw(interaction:discord.Interaction, prompt:str):
     except Exception as e:
         if str(e) == 'Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.':
             await channel.send(interaction.user.mention+'\n'+str(e))
+
+
+
+@bot.tree.command(
+    name="tz", 
+    description="Enter a date in 'YYYY-MM-DD' format and a time in 'HH:MM' or 'HHMM' (24-hour clock) with timezone"
+)
+async def time_zone(interaction: discord.Interaction, date: str, time: str, from_timezone: str):
+    try:
+        # Try to parse the time with a colon
+        try:
+            input_datetime = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
+        except ValueError:
+            # If that fails, try to parse it without a colon
+            input_datetime = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H%M')
+
+        from_tz = pytz.timezone(from_timezone)
+        localized_time = from_tz.localize(input_datetime)
+        unix_timestamp = int(localized_time.timestamp())
+        await interaction.response.send_message(f"<t:{unix_timestamp}:F>")
+    except Exception as e:
+                await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
 
 bot.run(token)
