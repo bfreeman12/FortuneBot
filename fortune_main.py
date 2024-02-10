@@ -244,10 +244,6 @@ async def ai_draw(interaction:discord.Interaction, prompt:str):
             await channel.send(interaction.user.mention+'\n'+str(e))
 
 
-
-import datetime
-import pytz
-
 @bot.tree.command(
     name="tz", 
     description="Enter a date in 'YYYY-MM-DD' format and a time in 'HH:MM' or 'HHMM' (24-hour clock) with timezone"
