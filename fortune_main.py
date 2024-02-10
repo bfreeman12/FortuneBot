@@ -245,6 +245,9 @@ async def ai_draw(interaction:discord.Interaction, prompt:str):
 
 
 
+import datetime
+import pytz
+
 @bot.tree.command(
     name="tz", 
     description="Enter a date in 'YYYY-MM-DD' format and a time in 'HH:MM' or 'HHMM' (24-hour clock) with timezone"
@@ -253,16 +256,18 @@ async def time_zone(interaction: discord.Interaction, date: str, time: str, from
     try:
         # Try to parse the time with a colon
         try:
-            input_datetime = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
+            input_datetime = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M')
         except ValueError:
             # If that fails, try to parse it without a colon
-            input_datetime = datetime.strptime(date + ' ' + time, '%Y-%m-%d %H%M')
+            input_datetime = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H%M')
 
         from_tz = pytz.timezone(from_timezone)
         localized_time = from_tz.localize(input_datetime)
         unix_timestamp = int(localized_time.timestamp())
         await interaction.response.send_message(f"<t:{unix_timestamp}:F>")
     except Exception as e:
-                await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+        # If an error occurs, send the user their current timezone
+        current_timezone = datetime.datetime.now(pytz.timezone('UTC')).astimezone().tzinfo
+        await interaction.response.send_message(f"An error occurred: {e}.\nFor a list of valid timezones visit https://tz.bigsad.dev", ephemeral=True)
 
 bot.run(token)
