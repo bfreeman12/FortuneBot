@@ -11,7 +11,7 @@ from datetime import datetime
 import pytz
 from datetime import datetime
 from openai import OpenAI
-
+import requests
 #gathers token for running the bot
 load_dotenv('token.env')
 token = environ["DISCORD_TOKEN"]
@@ -262,8 +262,34 @@ async def time_zone(interaction: discord.Interaction, date: str, time: str, from
         unix_timestamp = int(localized_time.timestamp())
         await interaction.response.send_message(f"<t:{unix_timestamp}:F>")
     except Exception as e:
-        # If an error occurs, send the user their current timezone
-        current_timezone = datetime.datetime.now(pytz.timezone('UTC')).astimezone().tzinfo
         await interaction.response.send_message(f"An error occurred: {e}.\nFor a list of valid timezones visit https://tz.bigsad.dev", ephemeral=True)
 
+
+
+@bot.tree.command(name='bored',description='The Oracle will provide a random activity for you to do!')
+async def bored(interaction:discord.Interaction):
+    try:
+        response = requests.get('https://www.boredapi.com/api/activity')
+        data = response.json()
+
+        embed = discord.Embed(title="The Oracle's Suggestion", description="You should...", color=0x00ff00)
+        embed.add_field(name="Activity", value=data['activity'], inline=False)
+
+        if 'type' in data:
+            embed.add_field(name="Type", value=data['type'], inline=True)
+        if 'participants' in data:
+            embed.add_field(name="Participants", value=data['participants'], inline=True)
+        if 'price' in data:
+            print(data['price'])
+            if data['price'] == 0:
+               data['price'] = "Free"
+            else:
+                data['price'] = "Costs money"
+
+            embed.add_field(name="Price", value=data['price'], inline=True)
+
+        await interaction.response.send_message(embed=embed)
+
+    except Exception as e:
+        await interaction.response.send_message(f"An error occurred: {e}.", ephemeral=True)
 bot.run(token)
